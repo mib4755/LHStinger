@@ -1,0 +1,326 @@
+###________________________________________________
+#    __          __  __________    __  ___   __  __  
+#   / /  /\  /\ / _\/__   \_   \/\ \ \/ _ \ /__\/__\ 
+#  / /  / /_/ / \ \   / /\// /\/  \/ / /_\//_\ / \// 
+# / /__/ __  /  _\ \ / //\/ /_/ /\  / /_\\//__/ _  \ 
+# \____|/ /_/   \__/ \/ \____/\_\ \/\____/\__/\/ \_/                           
+         
+### Fysetc Spider 3.0 - STM32H723VGT6
+
+### FYSETC Spider H7 Firmware Guide: https://github.com/lhndo/LH-Stinger/wiki/FYSETC-S3-H7-Firmware-Guide
+### Flash with (H723 ver. only):
+### STM32H723 | "No bootloader" | "25Mhz crystal"
+### USB Communication interface (PA11/PA12)
+
+
+###______________  Documentation:  ______________
+
+### Klipper Setup: https://github.com/lhndo/LH-Stinger/tree/main/Config/Klipper_Config
+### Klipper Config FYSETC: https://github.com/lhndo/LH-Stinger/tree/main/KITS/FYSETC/Klipper_Config_FYSETC
+### FYSETC Kit: https://github.com/lhndo/LH-Stinger/wiki/FYSETC-Kit
+### Macros: https://github.com/lhndo/LH-Stinger/wiki/Macros
+### Tuning Guide: https://github.com/lhndo/LH-Stinger/wiki/Tuning
+
+
+###______________  Configuration Includes  ______________
+
+[include mainsail.cfg]   # Mainsail or Fluid configuration choice, depending on your Klipper installation
+# [include fluidd.cfg]
+
+[include steppers.cfg]
+# [include steppersfast.cfg]  # High performance configuration only meant for extreme tests and prints (above 700mm/s at very high accels). Choose one or the other.
+
+[include quickdrawprobe.cfg]   # Quickdraw Probe Extension by Daalegard. For instructions please see quickdrawprobe.cfg 
+
+#[include adxl.cfg]   # Enable when connecting an ADXL device
+
+[include reshelper.cfg]   # Reshelper https://github.com/lhndo/ResHelper/tree/accel_per_hz
+
+[include mymacros.cfg]   # Macros
+
+[include TimelapseDSLR.cfg] # commands for taking photos with the DSLR
+
+[include timelapse.cfg] # commands for the built-in timelapse. timelapse.pz altered to use gphoto2, see 
+
+[include shell_command.cfg]
+
+[include led.cfg]
+
+#[include strom_mqtt.cfg]
+
+###__________________  MCU  ____________________
+
+[mcu]
+serial: /dev/serial/by-id/usb-Klipper_stm32h723xx_3B0009001251323032333536-if00
+   # To find your USB serial addres run: ls /dev/serial/by-id/*
+restart_method: command
+
+###_______________  Printer  ___________________
+
+[printer]
+kinematics: cartesian
+max_velocity: 1000
+max_accel: 5000           # Set for homing moves. Adjust accel per feature in the slicer
+minimum_cruise_ratio: 0.0
+max_z_velocity: 70
+max_z_accel: 800
+square_corner_velocity: 15.0
+
+
+###_______________  Steppers  ___________________
+
+[stepper_x]  ;  M0
+step_pin: PE11
+dir_pin: !PE10
+enable_pin: !PE9
+endstop_pin: ^PB14
+full_steps_per_rotation: 200
+rotation_distance: 40
+position_endstop: 0      # Do not change. The bed location is defined in the slicer according to the documentation: https://github.com/lhndo/LH-Stinger/wiki/Macros#bed-origin
+position_min: 0          # Do not change
+position_max: 254
+homing_speed: 80
+homing_retract_dist: 0
+
+[stepper_y]   ;  M2
+step_pin: PD14
+dir_pin: PD13 #!PD13
+enable_pin: !PD15
+endstop_pin: ^PA2
+full_steps_per_rotation: 200
+rotation_distance: 40
+position_endstop: 0      # Do not change 
+position_min: 0          # Do not change
+position_max: 252
+homing_speed: 80
+homing_retract_dist: 0
+
+[stepper_y1]   ;  M1
+step_pin: PD8
+dir_pin: !PB12 #PB12
+enable_pin: !PD9
+endstop_pin: ^PA2
+full_steps_per_rotation: 200
+rotation_distance: 40
+
+[stepper_z]   ;  M5
+step_pin: PE2
+dir_pin: PE4
+enable_pin: !PE3
+endstop_pin: probe:z_virtual_endstop
+full_steps_per_rotation: 200
+rotation_distance: 40
+gear_ratio: 80:20
+position_min: -30
+position_max: 184
+homing_speed: 10
+second_homing_speed: 4
+homing_retract_dist:3
+
+[stepper_z1]  ;  M4
+step_pin: PE6
+dir_pin: !PC13
+enable_pin: !PE5
+full_steps_per_rotation: 200
+rotation_distance: 40
+gear_ratio: 80:20
+
+
+[probe]  
+#z_offset: 7 # calibrate with probe_calibrate command. Remember to remove the probe from the toolhead. After calibrating and saving this will be automatically commented. 
+
+[firmware_retraction]
+retract_length: 0.4
+#   The length of filament (in mm) to retract when G10 is activated,
+#   and to unretract when G11 is activated (but see
+#   unretract_extra_length below). The default is 0 mm.
+retract_speed: 40
+#   The speed of retraction, in mm/s. The default is 20 mm/s.
+unretract_extra_length: 0
+#   The length (in mm) of *additional* filament to add when
+#   unretracting.
+unretract_speed: 40
+#   The speed of unretraction, in mm/s. The default is 10 mm/s.
+
+###_______________  Extruder/Bed  ___________________
+
+[extruder]   ;  M6
+step_pin: PD12
+dir_pin: PC4
+enable_pin: !PE8
+
+heater_pin: PC8
+sensor_pin: PB0
+sensor_type: PT1000
+
+smooth_time: 1.0
+rotation_distance: 3.6513 #3.727  # Might need calibration, please see: https://github.com/lhndo/LH-Stinger/wiki/Tuning#extruder-rotation-distance
+full_steps_per_rotation: 200
+min_temp: 0
+max_temp: 310
+min_extrude_temp: 170
+nozzle_diameter: 0.400
+filament_diameter: 1.750
+max_extrude_cross_section: 5
+max_extrude_only_distance: 1000.0
+max_extrude_only_velocity: 47
+max_extrude_only_accel: 2200
+instantaneous_corner_velocity: 3
+pressure_advance: 0.01646 #0.025
+pressure_advance_smooth_time: 0.02
+#control: pid
+#pid_Kp: 16.312
+#pid_Ki: 0.884
+#pid_Kd: 75.238
+
+
+[heater_bed]
+heater_pin: PB4
+sensor_pin: PC1
+sensor_type: Generic 3950
+smooth_time: 1
+min_temp: 0
+max_temp: 120
+#control: pid
+#pid_Kp: 58.277
+#pid_Ki: 3.108
+#pid_Kd: 273.173
+
+
+###_______________  Fans  ___________________
+
+# Fan 1 - Hotend Cooling Fan
+[heater_fan hotend_fan]
+pin: PB2
+heater: extruder
+heater_temp: 70.0
+kick_start_time: 0.500
+hardware_pwm: False
+cycle_time: 0.01
+fan_speed: 1.0
+
+# Fan 2 - Part Cooling Fan
+[fan]
+pin: PA14
+cycle_time: 0.01
+kick_start_time: 0.2
+hardware_pwm: False
+
+#  Fan 3 - Optional Auxiliary Fan
+[fan_generic aux]
+pin:PA13
+cycle_time: 0.017
+hardware_pwm: False
+kick_start_time: 0.2
+off_below: 0.15
+
+# Ebox Multipin
+[multi_pin ebox]
+pins: PB6,PB5
+
+# Fan 4 - Ebox
+[controller_fan ebox_stm32] 
+pin:multi_pin:ebox
+kick_start_time: 0.2
+stepper: stepper_y
+cycle_time: 0.01
+idle_timeout:30
+idle_speed:1.0
+off_below: 0.5
+
+
+###_______________  Temperature Sensors  ___________________
+
+# [temperature_sensor external] ; Optional external temperature sensor
+# sensor_pin:PC0
+# sensor_type: Generic 3950
+# min_temp: 0
+# max_temp: 300
+
+[temperature_sensor MCU]
+sensor_type: temperature_mcu
+min_temp: 0
+max_temp: 100
+
+[temperature_sensor PI]
+sensor_type: temperature_host
+min_temp: 0
+max_temp: 100
+
+
+###_______________  Modules  _____________________
+
+[idle_timeout]
+timeout: 600
+gcode:
+  {% if printer.pause_resume.is_paused %}
+    M118 Idle timeout while paused, turning off hotend
+    SET_HEATER_TEMPERATURE HEATER=extruder TARGET=0
+  {% else %}
+    M118 Idle timeout, turning off hotend and disabling steppers
+    TURN_OFF_HEATERS
+    M84
+  {% endif %}
+
+[exclude_object]
+
+[respond]
+
+[resonance_holder]
+accel_per_hz: 180
+
+[display_status]
+
+[force_move]
+enable_force_move: true
+
+[respond]
+default_type: echo
+default_prefix:
+
+[gcode_arcs]
+resolution: 0.1
+
+[input_shaper]
+shaper_freq_x: 92.4
+shaper_type_x: mzv
+shaper_freq_y: 103.2
+shaper_type_y: mzv
+
+#*# <---------------------- SAVE_CONFIG ---------------------->
+#*# DO NOT EDIT THIS BLOCK OR BELOW. The contents are auto-generated.
+#*#
+#*# [extruder]
+#*# control = pid
+#*# pid_kp = 20.322
+#*# pid_ki = 1.129
+#*# pid_kd = 91.447
+#*#
+#*# [heater_bed]
+#*# control = pid
+#*# pid_kp = 48.922
+#*# pid_ki = 0.764
+#*# pid_kd = 783.368
+#*#
+#*# [bed_mesh default]
+#*# version = 1
+#*# points =
+#*# 	  0.150358, 0.118327, 0.148405, 0.161296, 0.113249, 0.034733
+#*# 	  0.139811, 0.124577, 0.102702, 0.110905, 0.091374, 0.083171
+#*# 	  0.099577, 0.045280, 0.041374, 0.021452, 0.026140, 0.010905
+#*# 	  0.021843, -0.023860, -0.025423, -0.025032, -0.001985, -0.027767
+#*# 	  -0.030110, -0.075423, -0.091439, -0.048860, -0.060189, -0.070735
+#*# 	  -0.093001, -0.101204, -0.099642, -0.080501, -0.048079, -0.026595
+#*# x_count = 6
+#*# y_count = 6
+#*# mesh_x_pps = 2
+#*# mesh_y_pps = 2
+#*# algo = lagrange
+#*# tension = 0.2
+#*# min_x = 25.0
+#*# max_x = 211.0
+#*# min_y = 45.0
+#*# max_y = 231.0
+#*#
+#*# [probe]
+#*# z_offset = 8.820
